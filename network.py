@@ -1,14 +1,18 @@
-from typing import Callable, Dict, List, Tuple
+from typing import Callable
 
 import numpy as np
 from numpy.typing import ArrayLike
 
 
 class NeuralNetwork:
+    """
+    Fully connected neural network implemented using NumPy
+    """
+
     def __init__(
         self,
-        layer_dimensions: List[int],
-        activations: List[Callable],
+        layer_dimensions: list[int],
+        activations: list[Callable],
         loss_fn: Callable,
         init_method: str = "gaussian",
     ) -> None:
@@ -16,9 +20,9 @@ class NeuralNetwork:
         Construct a NeuralNetwork instance with given architecture
 
         Parameters:
-            layer_dimensions (List[int]):
-            activations (List[Callable):
-            loss_fn (Callable):
+            layer_dimensions (list[int]): List of layer sizes to use in the network
+            activations (list[Callable): List of activation functions to use in the network
+            loss_fn (Callable): Loss function to use in the network
 
         Returns:
             (NeuralNetwork): Returns an instance of the NeuralNetwork class
@@ -66,9 +70,7 @@ class NeuralNetwork:
 
         num_layers = len(self.layer_dimensions) - 1
         self.b = [
-            np.random.normal(
-                loc=0, scale=0.01, size=(1, self.layer_dimensions[i + 1])
-            )
+            np.random.normal(loc=0, scale=0.01, size=(1, self.layer_dimensions[i + 1]))
             for i in range(num_layers)
         ]
 
@@ -78,16 +80,18 @@ class NeuralNetwork:
         W: ArrayLike,
         b: ArrayLike,
         activation_fn: Callable,
-    ) -> Tuple[ArrayLike, Dict]:
-        """Computes one layer forward calculation for inputs"""
+    ) -> tuple[ArrayLike, dict]:
+        """
+        Computes one layer forward calculation for inputs
+        """
         out, grad_act_fn = activation_fn(x @ W + b)
         cache = dict(x=x, W=W, b=b, grad_act_fn=grad_act_fn)
         return out, cache
 
-    def _forward_pass(
-        self, X_batch: ArrayLike
-    ) -> Tuple[ArrayLike, List[ArrayLike]]:
-        """Computes an entire forward pass on the network"""
+    def _forward_pass(self, X_batch: ArrayLike) -> tuple[ArrayLike, list[ArrayLike]]:
+        """
+        Computes an entire forward pass on the network
+        """
         output = X_batch
         layer_caches = []
         for W, b, activation_fn in zip(self.W, self.b, self.activations):
@@ -95,9 +99,7 @@ class NeuralNetwork:
             activation = self.valid_activations.get(activation_fn)
 
             if activation is None:
-                raise ValueError(
-                    f"Activation function: {activation_fn} not supported"
-                )
+                raise ValueError(f"Activation function: {activation_fn} not supported")
 
             output, layer_cache = self._forward(output, W, b, activation)
             layer_caches.append(layer_cache)
@@ -105,8 +107,9 @@ class NeuralNetwork:
         return output, layer_caches
 
     def _backward_pass(
+        self,
         dL_dg: ArrayLike,
-        layer_caches: List[ArrayLike],
+        layer_caches: list[ArrayLike],
     ) -> ArrayLike:
         """Computes one backward pass of the network"""
         final_layer_cache = layer_caches[-1]
@@ -133,9 +136,7 @@ class NeuralNetwork:
                 cache_l["grad_act_fn"],
                 np.einsum("ij,jk->ki", prev_w, prev_delta.T),
             )
-            curr_dW = np.mean(
-                np.einsum("ij,ik->ikj", curr_delta, cache_l["x"]), axis=0
-            )
+            curr_dW = np.mean(np.einsum("ij,ik->ikj", curr_delta, cache_l["x"]), axis=0)
             curr_db = np.mean(curr_delta[:, None, :], axis=0)
 
             grad_Ws.append(curr_dW)
@@ -153,8 +154,10 @@ class NeuralNetwork:
         *,
         num_epochs: int,
         learning_rate: float,
-    ) -> Tuple[List[float], List[float]]:
-        """Train the Neural Network"""
+    ) -> tuple[list[float], list[float]]:
+        """
+        Train the Neural Network
+        """
         losses, accuracies = [], []
         for epoch in range(1, self.num_epochs + 1):
             print("-" * 15)
@@ -165,9 +168,7 @@ class NeuralNetwork:
             losses_epoch, accuracies_epoch = [], []
 
             for X_batch, y_batch in zip(X_batches, y_batches):
-                output, layer_caches = self._forward_pass(
-                    X_batch, self.W, self.b, self.activations
-                )
+                output, layer_caches = self._forward_pass(X_batch)
 
                 accuracy = np.mean(np.squeeze(output > 0.5) == y_batch)
                 accuracies_epoch.append(accuracy)
@@ -177,12 +178,10 @@ class NeuralNetwork:
 
                 grad_Ws, grad_bs = self._backward_pass(dL_dg, layer_caches)
                 self.W = [
-                    W - learning_rate * grad_W
-                    for grad_W, W in zip(grad_Ws, self.W)
+                    W - learning_rate * grad_W for grad_W, W in zip(grad_Ws, self.W)
                 ]
                 self.b = [
-                    b - learning_rate * grad_b
-                    for grad_b, b in zip(grad_bs, self.b)
+                    b - learning_rate * grad_b for grad_b, b in zip(grad_bs, self.b)
                 ]
 
             print(f"Average Training Loss: {np.mean(losses_epoch)}")
@@ -223,10 +222,9 @@ class NeuralNetwork:
     def logistic_loss(
         g: ArrayLike,
         y: ArrayLike,
-    ) -> Tuple[ArrayLike, ArrayLike]:
+    ) -> tuple[ArrayLike, ArrayLike]:
         """
-        Computes the loss and gradient for binary classification with logistic
-        loss
+        Computes the loss and gradient for binary classification with logistic loss
 
         Inputs:
         - g: Output of final layer with sigmoid activation,
@@ -249,7 +247,7 @@ class NeuralNetwork:
         return loss, dL_dg
 
     @staticmethod
-    def relu_activation(s: ArrayLike) -> Tuple[ArrayLike, ArrayLike]:
+    def relu_activation(s: ArrayLike) -> tuple[ArrayLike, ArrayLike]:
         out = s * (s > 0)
         ds = 1.0 * (s > 0)
 
@@ -263,8 +261,10 @@ class NeuralNetwork:
         X: ArrayLike,
         y: ArrayLike,
         batch_size: int = 100,
-    ) -> Tuple[List[ArrayLike], List[ArrayLike]]:
-        """Splits training data into batches"""
+    ) -> tuple[list[ArrayLike], list[ArrayLike]]:
+        """
+        Splits training data into batches
+        """
         shuffled_idx = np.random.permutation(len(X))
         X = X[shuffled_idx]
         y = y[shuffled_idx]
