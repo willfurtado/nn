@@ -22,7 +22,9 @@ class Dataset:
         self.y = y
 
     def create_batches(
-        self, batch_size: int
+        self,
+        batch_size: int,
+        drop_last: bool = False,
     ) -> tuple[list[np.ndarray], list[np.ndarray]]:
         """
         Splits training data into batches
@@ -40,7 +42,11 @@ class Dataset:
 
         num_batches = np.ceil(first_X_train.shape[0] / batch_size)
 
-        X_batches = np.array_split(first_X_train, num_batches) + [last_X_train]
-        y_batches = np.array_split(first_y_train, num_batches) + [last_y_train]
+        X_batches = np.array_split(first_X_train, num_batches)
+        y_batches = np.array_split(first_y_train, num_batches)
+
+        if not drop_last:
+            X_batches = X_batches + [last_X_train]
+            y_batches = y_batches + [last_y_train]
 
         return X_batches, y_batches

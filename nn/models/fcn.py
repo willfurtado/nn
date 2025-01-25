@@ -6,12 +6,18 @@ from typing import Callable
 
 import numpy as np
 from nn.models.base import Model
+from nn import activations
 
 
 class FullyConnectedNetwork(Model):
     """
     Fully connected neural network implemented using NumPy
     """
+
+    valid_activations: list[str, callable] = {
+        "relu": activations.relu_activation,
+        "sigmoid": activations.sigmoid_activation,
+    }
 
     def __init__(
         self,
@@ -37,8 +43,6 @@ class FullyConnectedNetwork(Model):
 
         self._initialize_weight_matrices(how=init_method)
         self._initialize_bias_vectors(how=init_method)
-
-        return out, cache
 
     def forward_pass(self, X_batch: np.ndarray) -> tuple[np.ndarray, list[np.ndarray]]:
         """
@@ -122,6 +126,8 @@ class FullyConnectedNetwork(Model):
         out, grad_act_fn = activation_fn(x @ W + b)
         cache = dict(x=x, W=W, b=b, grad_act_fn=grad_act_fn)
 
+        return out, cache
+
     def _initialize_weight_matrices(self, how: str = "gaussian") -> None:
         """
         Creates a list of weight matrices defining the weights of NN
@@ -161,3 +167,9 @@ class FullyConnectedNetwork(Model):
             np.random.normal(loc=0, scale=0.01, size=(1, self.layer_dimensions[i + 1]))
             for i in range(num_layers)
         ]
+
+    def __repr__(self) -> str:
+        """
+        String representation of the `FullConnectedNetwork` class
+        """
+        return f"{self.__class__.__name__}(layers={self.layer_dimensions})"
