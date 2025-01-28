@@ -10,10 +10,11 @@ def relu_activation(s: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     Rectified Linear Unit (ReLU) Activation function
 
     Parameters:
-        s (np.ndarray):
+        s (np.ndarray): Layer output of shape (B, layer_dim)
 
     Returns:
-        (tuple[np.ndarray, np.ndarray]):
+        (tuple[np.ndarray, np.ndarray]): Two-element tuple of ReLU activation output,
+            of shape (B, layer_dim) and ReLU gradient information, of shape (B, layer_dim)
     """
     out = s * (s > 0)
     ds = 1.0 * (s > 0)
@@ -35,11 +36,12 @@ def sigmoid_activation(
     Sigmoid Activation function
 
     Parameters:
-        x (np.ndarray):
-        eps (float):
+        x (np.ndarray): Layer output of shape (B, layer_dim)
+        eps (float): Small epsilon used for numerical stability. Defaults to 10e-15.
 
     Returns:
-        (tuple[np.ndarray, np.ndarray]):
+        (tuple[np.ndarray, np.ndarray]): Two-element tupel of sigmoid activation output,
+            of shape (B, layer_dim) and sigmoid gradient information, of shape (B, layer_dim)
     """
     out = _stable_sigmoid(x)
     grad = _stable_sigmoid(x) * (1.0 - _stable_sigmoid(x))
@@ -55,10 +57,10 @@ def _stable_sigmoid(x: np.ndarray) -> np.ndarray:
     caused by instability of floating point operations for very small / large values.
 
     Parameters:
-        x (np.ndarray):
+        x (np.ndarray): Layer output of shape (B, layer_dim)
 
     Returns:
-        (np.ndarray):
+        (np.ndarray): Sigmoiod output of shape (B, layer_dim)
     """
     out_arr_pos, out_arr_neg = np.zeros(x.shape), np.zeros(x.shape)
 

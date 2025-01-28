@@ -1,5 +1,5 @@
 """
-Base implementation for all models
+Base implementation for all models in the `nn.models` module
 """
 
 from abc import ABC, abstractmethod
@@ -31,3 +31,9 @@ class Model(ABC):
         Run model inference on input
         """
         pass
+
+    def __repr__(self) -> str:
+        """
+        String representation of the `Model` class
+        """
+        return f"{self.__class__.__name__}()"

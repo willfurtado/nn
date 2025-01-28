@@ -1,5 +1,5 @@
 """
-Module responsible for model training
+Module responsible for launching training runs
 """
 
 import numpy as np
@@ -25,6 +25,15 @@ class Trainer:
     ):
         """
         Creates an instance of the `Trainer` class
+
+        Parameters:
+            model (Model): Model object used for training
+            dataset (Dataset): Dataset object used for loading training data
+            num_epochs (int): Number of epochs to train the model for
+            batch_size (int): Number of data examples to use in each batch
+            learning_rate (float): Learning rate to use in gradient descent optimization
+            drop_last (bool): Whether to drop the last training example
+            verbose (bool): Whether to print out per-epoch training losses and accuracies
         """
         self.model = model
         self.dataset = dataset
@@ -75,8 +84,9 @@ class Trainer:
                 for grad_b, b in zip(grad_bs, self.model.b)
             ]
 
-        print(f"Average Training Loss: {np.mean(losses_epoch)}")
-        print(f"Average Training Accuracy: {np.mean(accuracies_epoch)}\n")
+        if self.verbose:
+            print(f"Average Training Loss: {np.mean(losses_epoch)}")
+            print(f"Average Training Accuracy: {np.mean(accuracies_epoch)}\n")
 
         self.losses.extend(losses_epoch)
         self.accuracies.extend(accuracies_epoch)

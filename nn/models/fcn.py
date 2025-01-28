@@ -27,15 +27,16 @@ class FullyConnectedNetwork(Model):
         init_method: str = "gaussian",
     ) -> None:
         """
-        Construct a NeuralNetwork instance with given architecture
+        Construct a `FullyConnectedNetwork` instance with given architecture
 
         Parameters:
             layer_dimensions (list[int]): List of layer sizes to use in the network
             activations (list[Callable): List of activation functions to use in the network
             loss_fn (Callable): Loss function to use in the network
+            init_method (str): Model weight initialization method. Defaults to `gaussian`.
 
         Returns:
-            (NeuralNetwork): Returns an instance of the NeuralNetwork class
+            (FullyConnectedNetwork): Returns an instance of the `FullyConnectedNetwork` class
         """
         self.layer_dimensions = layer_dimensions
         self.activations = activations
@@ -44,9 +45,18 @@ class FullyConnectedNetwork(Model):
         self._initialize_weight_matrices(how=init_method)
         self._initialize_bias_vectors(how=init_method)
 
-    def forward_pass(self, X_batch: np.ndarray) -> tuple[np.ndarray, list[np.ndarray]]:
+    def forward_pass(
+        self, X_batch: np.ndarray
+    ) -> tuple[np.ndarray, list[dict[str, np.ndarray]]]:
         """
         Computes an entire forward pass on the network
+
+        Parameters:
+            X_batch (np.ndarray): Input batch of shape (B, input_dim)
+
+        Returns:
+            (tuple[np.ndarray, list[dict[str, np.ndarray]]]): Two-element tuple containing raw model output and
+                intermediate model activation cache used for backward pass
         """
         output = X_batch
         layer_caches = []
@@ -65,10 +75,18 @@ class FullyConnectedNetwork(Model):
     def backward_pass(
         self,
         dL_dg: np.ndarray,
-        layer_caches: list[np.ndarray],
-    ) -> np.ndarray:
+        layer_caches: list[dict[str, np.ndarray]],
+    ) -> tuple[list[np.ndarray], list[np.ndarray]]:
         """
         Computes one backward pass of the network
+
+        Parameters:
+            dL_dg (np.ndarray): Gradient of loss function w.r.t. last layer output
+            layer_caches (list[dict[str, np.ndarray]]): Intermediate model activations, cached from forward pass
+
+        Returns:
+            (tuple[list[np.ndarray], list[np.ndarray]]): Two-element tuple containing list of weight gradients
+                for each layer and list of bias gradients for each layer
         """
         final_layer_cache = layer_caches[-1]
         final_layer_delta = np.multiply(dL_dg, final_layer_cache["grad_act_fn"])
@@ -105,9 +123,15 @@ class FullyConnectedNetwork(Model):
 
         return grad_Ws[::-1], grad_bs[::-1]
 
-    def predict(self, X) -> np.ndarray:
+    def predict(self, X: np.ndarray) -> np.ndarray:
         """
-        Pass new array of data points through the network
+        Pass new array of data points through the network, discarding gradient information
+
+        Parameters:
+            X (np.ndarray): Input batch of data of shape (B, input_shape)
+
+        Returns:
+            (np.ndarray): Raw model output of shape (B, num_classes)
         """
         output, _ = self.forward_pass(X)
 
@@ -119,9 +143,19 @@ class FullyConnectedNetwork(Model):
         W: np.ndarray,
         b: np.ndarray,
         activation_fn: Callable,
-    ) -> tuple[np.ndarray, dict]:
+    ) -> tuple[np.ndarray, dict[str, np.ndarray]]:
         """
-        Computes one layer forward calculation for inputs
+        Computes one layer's forward pass and caches gradient information
+
+        Parameters:
+            x (np.ndarray): Input data point of shape (B, input_dim)
+            W (np.ndarray): Model weight matrix of shape (input_dim, output_dim)
+            b (np.ndarray): Model bias vector shape (1, output_dim)
+            activation_fn (Callable): Activation function to call on linear output
+
+        Returns:
+            (tuple[np.ndarray, dict[str, np.ndarray]]): Two-element tuple of layer output and
+                dictionary caching activation and gradient information
         """
         out, grad_act_fn = activation_fn(x @ W + b)
         cache = dict(x=x, W=W, b=b, grad_act_fn=grad_act_fn)
@@ -130,16 +164,14 @@ class FullyConnectedNetwork(Model):
 
     def _initialize_weight_matrices(self, how: str = "gaussian") -> None:
         """
-        Creates a list of weight matrices defining the weights of NN
+        Creates a list of weight matrices representing model weights
 
         Parameters:
-            layer_dims: A list whose size is the number of layers. layer_dims[i]
-                    defines the number of neurons in the i+1 layer.
+            how (str): Weight initialization method. Defaults to "gaussian".
 
         Returns:
-            (None): A list of weight matrices
+            (None): The `W` attribute of the model will be updated inplace
         """
-
         if how != "gaussian":
             raise NotImplementedError(
                 f"Weights initialization with {how} not yet supported"
@@ -156,7 +188,15 @@ class FullyConnectedNetwork(Model):
         ]
 
     def _initialize_bias_vectors(self, how: str = "gaussian") -> None:
+        """
+        Creates a list of bias vectors representing model biases
 
+        Parameters:
+            how (str): Bias initialization method. Defaults to "gaussian".
+
+        Returns:
+            (None): The `b` attribute of the model will be updated inplace
+        """
         if how != "gaussian":
             raise NotImplementedError(
                 f"Bias initialization with {how} not yet supported"
@@ -170,6 +210,6 @@ class FullyConnectedNetwork(Model):
 
     def __repr__(self) -> str:
         """
-        String representation of the `FullConnectedNetwork` class
+        String representation of the `FullyConnectedNetwork` class
         """
         return f"{self.__class__.__name__}(layers={self.layer_dimensions})"

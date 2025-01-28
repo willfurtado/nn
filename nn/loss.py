@@ -1,5 +1,5 @@
 """
-Definitions for common loss functions used during model trainign
+Definitions for common loss functions used during model training
 """
 
 import numpy as np
